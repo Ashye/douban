@@ -8,12 +8,13 @@ import tornado.ioloop
 import tornado.web
 
 
-import movie.hot_movies
+import movie_service as Movie
 
 
 def make_app():
     application = tornado.web.Application([
-        (r'/movies/hot', movie.hot_movies.HotMoviesEventHandler),
+        (r'/movies/hot', Movie.HotMoviesEventHandler),
+        (r'/movies/coming', Movie.ComingSoonMoviesEventHandler)
     ], debug=True)
     application.listen(8080)
     tornado.ioloop.IOLoop.current().start()
