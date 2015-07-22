@@ -8,7 +8,12 @@ import json
 import data_loader as MovieLoader
 
 
-class HotMoviesEventHandler(tornado.web.RequestHandler):
+class EventHandler(tornado.web.RequestHandler):
+    def get(self, params=None):
+        raise tornado.web.HTTPError(405)
+
+
+class HotMoviesEventHandler(EventHandler):
     def get(self, params=None):
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(self.load_hot_movies(), ensure_ascii=False))
@@ -17,10 +22,11 @@ class HotMoviesEventHandler(tornado.web.RequestHandler):
         return MovieLoader.load_hot_movies()
 
 
-class ComingSoonMoviesEventHandler(tornado.web.RequestHandler):
+class ComingSoonMoviesEventHandler(EventHandler):
     def get(self, param=None):
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(self.load_coming_soon_movies(), ensure_ascii=False))
 
     def load_coming_soon_movies(self):
         return MovieLoader.load_coming_soon_movies()
+
