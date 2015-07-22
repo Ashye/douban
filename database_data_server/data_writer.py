@@ -9,7 +9,9 @@ __author__ = 'Administrator'
 import json
 import sys
 import os
-sys.path.append(os.path.join(os.path.abspath(os.path.curdir), 'database'))
+curr_file_dir = os.path.dirname(__file__)
+database_dir= curr_file_dir.replace('database_data_server', 'database')
+sys.path.append(database_dir)
 import database_helper as db_helper
 
 

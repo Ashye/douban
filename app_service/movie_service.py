@@ -16,7 +16,7 @@ class EventHandler(tornado.web.RequestHandler):
 class HotMoviesEventHandler(EventHandler):
     def get(self, params=None):
         self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(self.load_hot_movies(), ensure_ascii=False))
+        self.write(json.dumps(self.load_hot_movies()))
 
     def load_hot_movies(self):
         return MovieLoader.load_hot_movies()
@@ -25,7 +25,7 @@ class HotMoviesEventHandler(EventHandler):
 class ComingSoonMoviesEventHandler(EventHandler):
     def get(self, param=None):
         self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(self.load_coming_soon_movies(), ensure_ascii=False))
+        self.write(json.dumps(self.load_coming_soon_movies()))
 
     def load_coming_soon_movies(self):
         return MovieLoader.load_coming_soon_movies()

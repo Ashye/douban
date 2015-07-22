@@ -9,8 +9,15 @@ __author__ = 'Administrator'
 import json
 import os
 import sys
-sys.path.append(os.path.join(os.path.abspath(os.path.curdir), 'database'))
+
+curr_file_dir = os.path.dirname(__file__)
+database_dir= curr_file_dir.replace('app_service', 'database')
+sys.path.append(database_dir)
+
+
 import database_helper as DBHelper
+
+
 
 
 def load_hot_movies():

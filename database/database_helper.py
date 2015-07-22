@@ -12,8 +12,8 @@ movie_hot = 'hot'
 movie_coming_soon = 'coming_soon'
 
 movie_db_path = dict(
-    hot=r'./database/hot_movies.db',
-    coming_soon=r'./database/coming_soon_movies.db'
+    hot=r'./hot_movies.db',
+    coming_soon=r'./coming_soon_movies.db'
 )
 
 
@@ -32,7 +32,7 @@ def override_local_database(movies, movie_type):
 def write_obj_to_database_in_json(data, movie_type):
     file_obj = open(movie_db_path[movie_type], 'w')
     file_obj.truncate(0)
-    json.dump(data, file_obj, ensure_ascii=False)
+    json.dump(data, file_obj)
     file_obj.close()
 
 

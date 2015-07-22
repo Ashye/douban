@@ -17,7 +17,7 @@ coming_soon_movies_url = r'http://movie.douban.com/later/shenzhen/'
 
 
 def update_movie_library():
-    # update_hot_movies()
+    update_hot_movies()
     update_coming_soon_movies()
 
 
