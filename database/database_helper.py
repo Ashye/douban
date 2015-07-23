@@ -6,14 +6,15 @@ __author__ = 'Administrator'
 '''
 
 import json
-
+import os
 
 movie_hot = 'hot'
 movie_coming_soon = 'coming_soon'
 
+movie_db_base_path = os.path.abspath(os.path.dirname(__file__))
 movie_db_path = dict(
-    hot=r'./hot_movies.db',
-    coming_soon=r'./coming_soon_movies.db'
+    hot=os.path.join(movie_db_base_path, r'hot_movies.db'),
+    coming_soon=os.path.join(movie_db_base_path, r'coming_soon_movies.db')
 )
 
 
