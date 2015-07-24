@@ -7,7 +7,7 @@ __author__ = 'ych'
 import tornado.ioloop
 import tornado.web
 
-from app_service import movie_service as Movie
+import app_service.movie_service as Movie
 
 
 def make_app():
