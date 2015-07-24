@@ -5,7 +5,11 @@
 import tornado.web
 import json
 
-import data_loader as MovieLoader
+
+import app_service.data_loader as MovieLoader
+# # import data_loader as MovieLoader
+# import os
+# print(os.path.abspath(os.path.curdir))
 
 
 class EventHandler(tornado.web.RequestHandler):
