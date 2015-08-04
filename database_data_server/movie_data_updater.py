@@ -58,7 +58,8 @@ def extract_now_playing_movie_data(movie_html_items):
         # print(item)
         poster_html = item.find('li', class_='poster')
         image_html = poster_html.img
-        movie_poster = dict(alt=image_html['alt'], url=image_html['src'])
+        movie_poster_url = image_html['src']
+        movie_poster_alt = image_html['alt']
         # print(movie_poster)
         title_html = item.find('li', class_='stitle')
         movie_title = title_html.a['title']
@@ -70,7 +71,7 @@ def extract_now_playing_movie_data(movie_html_items):
             movie_rating = score_html.get_text()
         else:
             movie_rating = r'暂无评分'
-        movie = dict(poster=movie_poster, title=movie_title, rating=movie_rating)
+        movie = dict(posterUrl=movie_poster_url, posterAltText=movie_poster_alt, title=movie_title, rating=movie_rating)
         # print(movie)
         data.append(movie)
     return data
