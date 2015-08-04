@@ -79,4 +79,8 @@ res/values/styles.xml
 
 
 
-## 
+## Activity 之间传递数据
+### 传 Bundle
+#### 接收端 接收 Bundle 数据
+    Bundle myBundelForGetName=this.getIntent().getExtras(); 
+    String name=myBundelForGetName.getString("Key_Name"); 
