@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- codeing:utf-8 -*-
+# -*- coding:utf-8 -*-
 '''
 __author__ = 'ych'
 '''
@@ -15,7 +15,8 @@ def make_app():
     application = tornado.web.Application([
         (r'/movies/hot', Movie.HotMoviesEventHandler),
         (r'/movies/coming', Movie.ComingSoonMoviesEventHandler),
-        (r'/echo', httpEchoer.HttpEchoer)
+        (r'/echo', httpEchoer.HttpEchoer),
+        (r'/search', Movie.SearchEventHandler)
     ], debug=True)
     application.listen(8080)
     tornado.ioloop.IOLoop.current().start()
