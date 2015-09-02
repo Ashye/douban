@@ -99,7 +99,7 @@ class SearchEventHandler(EventHandler):
                     cover_a = content_div.find('div', class_='entry_cover')
                     if cover_a:
                         cover_img = cover_a.find('img', class_='cover_img')
-                        print(cover_img)
+                        # print(cover_img)
                         cover_url = cover_img['_src']
                         if cover_url is None:
                             cover_url = cover_img['src']
