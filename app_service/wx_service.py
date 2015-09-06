@@ -26,7 +26,9 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
         xml_text = self.request.body.decode('utf-8')
         in_message = self.extract_normal_message_info(xml_text)
         # print(in_message)
+        print(type(in_message))
         ret = self.convter_to_xml(in_message)
+        print(type(ret))
         if ret:
             self.set_header(contentTypeName, contentTypeValue)
             self.write(ET.tostring(ret, encoding='utf-8', method='xml'))
