@@ -25,20 +25,17 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
         self.write(echostr)
 
     def post(self, *args, **kwargs):
-        print("sssssssss post :", self.request.body)
+        # print("sssssssss post :", self.request.body)
         xml_text = self.request.body
         in_message = self.extract_normal_message_info(xml_text)
-        # print(in_message)
-        print(type(in_message))
         to_user = in_message['FromUserName']
         in_message['FromUserName'] = in_message['ToUserName']
         in_message['ToUserName'] = to_user
         ret = self.convter_to_xml(in_message)
-        print(type(ret))
         if ret:
             self.set_header(contentTypeName, contentTypeValue)
             resstr = ET.tostring(ret, encoding='utf-8', method='xml')
-            print(resstr)
+            # print(resstr)
             self.write(resstr)
         else:
             self.write("")
