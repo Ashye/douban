@@ -31,7 +31,9 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
         print(type(ret))
         if ret:
             self.set_header(contentTypeName, contentTypeValue)
-            self.write(ET.tostring(ret, encoding='utf-8', method='xml'))
+            resstr = ET.tostring(ret, encoding='utf-8', method='xml')
+            print(resstr)
+            self.write(resstr)
         else:
             self.write("")
 
