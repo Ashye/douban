@@ -15,6 +15,7 @@ import app_service.data_loader as MovieLoader
 contentTypeName = r'Content-Type'
 contentTypeValue = r'application/json;charset=utf-8'
 
+
 class EventHandler(tornado.web.RequestHandler):
     def get(self, params=None):
         raise tornado.web.HTTPError(405)
