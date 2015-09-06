@@ -3,8 +3,9 @@
 
 
 
+import imp
 import sys
-sys.reload(sys)
+imp.reload(sys)
 sys.setdefaultencoding("utf-8")
 
 
