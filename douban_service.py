@@ -18,7 +18,8 @@ def make_app():
         (r'/movies/coming', Movie.ComingSoonMoviesEventHandler),
         (r'/echo', httpEchoer.HttpEchoer),
         (r'/search', Movie.SearchEventHandler),
-        (r'/h5/check', Html5.Html5AppHandler)
+        (r'/h5/check', Html5.Html5AppHandler),
+		(r'/wx', Html5.Html5AppHandler)
     ], debug=True)
     application.listen(8080)
     tornado.ioloop.IOLoop.current().start()
