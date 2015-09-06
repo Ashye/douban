@@ -3,11 +3,6 @@
 
 
 
-import imp
-import sys
-imp.reload(sys)
-sys.setdefaultencoding("utf-8")
-
 
 import tornado.web
 try:
