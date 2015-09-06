@@ -30,6 +30,9 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
         in_message = self.extract_normal_message_info(xml_text)
         # print(in_message)
         print(type(in_message))
+        to_user = in_message['FromUserName']
+        in_message['FromUserName'] = in_message['ToUserName']
+        in_message['ToUserName'] = to_user
         ret = self.convter_to_xml(in_message)
         print(type(ret))
         if ret:
