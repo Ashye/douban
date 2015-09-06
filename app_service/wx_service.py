@@ -4,7 +4,7 @@
 
 
 import sys
-reload(sys)
+sys.reload(sys)
 sys.setdefaultencoding("utf-8")
 
 
@@ -38,7 +38,7 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
         if ret:
             self.set_header(contentTypeName, contentTypeValue)
             resstr = ET.tostring(ret, encoding='utf-8', method='xml')
-            print(resstr.decode("utf-8"))
+            print(resstr)
             self.write(resstr)
         else:
             self.write("")
