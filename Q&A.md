@@ -83,4 +83,8 @@ res/values/styles.xml
 ### 传 Bundle
 #### 接收端 接收 Bundle 数据
     Bundle myBundelForGetName=this.getIntent().getExtras(); 
-    String name=myBundelForGetName.getString("Key_Name"); 
+    String name=myBundelForGetName.getString("Key_Name");
+
+
+## python 解析 xml
+本例中使用 etree 解析微信返回的 xml 信息，[参考](http://blog.csdn.net/gingerredjade/article/details/21944675))
