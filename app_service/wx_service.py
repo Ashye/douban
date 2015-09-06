@@ -2,6 +2,12 @@
 # -*- coding:utf-8 -*-
 
 
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+
 import tornado.web
 try:
     import xml.etree.cElementTree as ET
