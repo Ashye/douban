@@ -26,7 +26,8 @@ class WeiXunEventHandler(tornado.web.RequestHandler):
 
     def post(self, *args, **kwargs):
         xml_text = self.request.body.decode('utf-8')
-        print(xml_text)
+        print(str(self.request.body))
+        print(self.request.body)
         in_message = self.extract_normal_message_info(xml_text)
         # print(in_message)
         print(type(in_message))
