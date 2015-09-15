@@ -87,4 +87,4 @@ res/values/styles.xml
 
 
 ## python 解析 xml
-本例中使用 etree 解析微信返回的 xml 信息，[参考](http://blog.csdn.net/gingerredjade/article/details/21944675))
+本例中使用 etree 解析微信返回的 xml 信息，[参考](http://blog.csdn.net/gingerredjade/article/details/21944675)

@@ -32,14 +32,22 @@
 
 ### 网络接口
 
->网络通信使用 [HTTP][1] 协议,所传递的数据均使用 [Json][2] 格式
+>网络通信使用 [HTTP](http://baike.baidu.com/view/9472.htm) 协议,所传递的数据均使用 [Json](http://baike.baidu.com/view/136475.htm) 格式
 
-[1]: http://baike.baidu.com/view/9472.htm
-[2]: http://baike.baidu.com/view/136475.htm
 
 
 
 #### 接口
+
++ /movies/hot
++ /movies/coming
++ /echo
++ /movies/search?query=
++ #/h5/check
++ /wx
++ /movies/detail
+
+
 
 - *reg: 注册*
 - *login: 登陆*

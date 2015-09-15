@@ -17,9 +17,10 @@ def make_app():
         (r'/movies/hot', Movie.HotMoviesEventHandler),
         (r'/movies/coming', Movie.ComingSoonMoviesEventHandler),
         (r'/echo', httpEchoer.HttpEchoer),
-        (r'/search', Movie.SearchEventHandler),
+        (r'/movies/search', Movie.SearchEventHandler),
         # (r'/h5/check', Html5.Html5AppHandler),
-        (r'/wx', WeiXin.WeiXunEventHandler)
+        (r'/wx', WeiXin.WeiXunEventHandler),
+        (r'/movies/detail', Movie.MovieDetailEventHandler)
 
     ], debug=True)
     application.listen(8080)

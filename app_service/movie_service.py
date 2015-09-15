@@ -11,14 +11,25 @@ from bs4 import BeautifulSoup
 import app_service.data_loader as MovieLoader
 
 
-
 contentTypeName = r'Content-Type'
 contentTypeValue = r'application/json;charset=utf-8'
 
 
 class EventHandler(tornado.web.RequestHandler):
+
     def get(self, params=None):
         raise tornado.web.HTTPError(405)
+
+    def extract_data_from_html(self, response):
+        return dict()
+
+    def async_handler(self, response):
+        data = self.extract_data_from_html(response)
+        ret = dict()
+        ret['result'] = "ok"
+        ret['data'] = data
+        self.write(ret)
+        self.finish()
 
 
 class HotMoviesEventHandler(EventHandler):
@@ -50,20 +61,12 @@ class SearchEventHandler(EventHandler):
         self.set_header(contentTypeName, contentTypeValue)
         if query:
             async_client = tornado.httpclient.AsyncHTTPClient()
-            async_client.fetch(self.queryUrl + query, self.asyncHandler)
+            async_client.fetch(self.queryUrl + query, self.async_handler)
         else:
             self.write('{"result":"error", "reason":"no query keyword"}')
             self.finish()
 
-    def asyncHandler(self, resonpse):
-        data = self.extractSearchResultData(resonpse)
-        ret = dict()
-        ret['result'] = "ok"
-        ret['data'] = data
-        self.write(ret)
-        self.finish()
-
-    def extractSearchResultData(self, response):
+    def extract_data_from_html(self, response):
         html = response.body.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
 
@@ -122,6 +125,68 @@ class SearchEventHandler(EventHandler):
             if data:
                 item_data.append(data)
             else:
-                print("not support type: \'", cat_type, "\'")
-
+                # print("not support type: \'", cat_type, "\'")
+                pass
         return item_data
+
+
+class MovieDetailEventHandler(EventHandler):
+
+    @tornado.web.asynchronous
+    def post(self):
+        str_data = self.request.body.decode("utf-8")
+        data = json.loads(str_data, "utf-8")
+        target_url = data["url"]
+        self.set_header(contentTypeName, contentTypeValue)
+        if target_url:
+            async_client = tornado.httpclient.AsyncHTTPClient()
+            async_client.fetch(target_url, self.async_handler)
+        else:
+            self.write('{"result":"error", "reason":"bad request"}')
+            self.finish()
+
+    def extract_data_from_html(self, response):
+        html = response.body.decode('utf-8')
+        soup = BeautifulSoup(html, 'html.parser')
+        del html
+        ret_data = dict()
+        left_div = soup.find("div", class_="leftDiv")
+        if left_div:
+            del soup
+            title_str = self.extract_title(left_div)
+
+            info_data_div = left_div.find("div", class_="headinfo_left")
+            if info_data_div:
+                pic_li = info_data_div.find("li", class_="imgdiv")
+                if pic_li:
+                    updated_str = pic_li.div.div.get_text()
+                    pic_url = pic_li.div.img["src"]
+                    # print(updated_str, pic_url)
+                    ret_data["cover"] = pic_url
+                    ret_data["updated"] = updated_str
+
+                del pic_li
+
+                info_li = info_data_div.find("li", class_="infodiv")
+                if info_li:
+                    info_lis = info_li.ul.find_all("li")
+                    for li_item in info_lis:
+                        span_items = li_item.find_all("span")
+                        for span in span_items:
+                            info_item_text = span.get_text()
+                            info_item = info_item_text.split("：")
+                            if len(info_item) == 2:
+                                ret_data[info_item[0]] = info_item[1]
+                del info_li
+        else:
+            print("ssssssssssss")
+        return ret_data
+
+    def extract_title(self, div):
+        title_div = div.find("div", class_="titleDiv")
+        if title_div:
+            # print(title_div.h1.get_text())
+            title = title_div.h1.get_text()
+            return title
+        else:
+            return None
