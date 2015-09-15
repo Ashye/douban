@@ -154,6 +154,7 @@ class MovieDetailEventHandler(EventHandler):
         if left_div:
             del soup
             title_str = self.extract_title(left_div)
+            ret_data["title"] = title_str
 
             info_data_div = left_div.find("div", class_="headinfo_left")
             if info_data_div:
@@ -178,6 +179,43 @@ class MovieDetailEventHandler(EventHandler):
                             if len(info_item) == 2:
                                 ret_data[info_item[0]] = info_item[1]
                 del info_li
+            del info_data_div
+
+            watch_place_div = left_div.find_all("div", class_="entry_video_1")
+            if watch_place_div:
+                watch_platform = []
+                for place in watch_place_div:
+                    # print(place.name)
+                    place_name = place.get("name")
+                    if place_name == "playlist":
+                        # print(place_name)
+                        place_type = place.get("id")
+                        place_type_parts = place_type.split("_")
+                        if len(place_type_parts) == 2:
+                            watch_platform.append(place_type_parts[1])
+                ret_data["platform"] = watch_platform
+            del watch_place_div
+
+            comment_more = left_div.find("div", id="contents_more")
+            if comment_more:
+                # print(comment_more.name)
+                comment_text = comment_more.div.get_text()
+                ret_data["summary"] = comment_text
+            del comment_more
+
+            posters_div = left_div.find("ul", id="entry_image_div")
+            if posters_div:
+                # print(posters_div.name)
+                poster_list = []
+                posters_lis = posters_div.find_all("li")
+                for poster_li in posters_lis:
+                    poster_img = poster_li.find("img")
+                    poster_url = poster_img.get("_src")
+                    if poster_url is None:
+                        poster_url = poster_img.get("src")
+                    if poster_url:
+                        poster_list.append(poster_url)
+                ret_data["posters"] = poster_list
         else:
             print("ssssssssssss")
         return ret_data
