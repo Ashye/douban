@@ -5,6 +5,7 @@
 import tornado.web
 import tornado.httpclient
 import json
+import urllib.parse
 
 from bs4 import BeautifulSoup
 
@@ -51,7 +52,7 @@ class ComingSoonMoviesEventHandler(EventHandler):
 
 
 class SearchEventHandler(EventHandler):
-    baseUrl = r'http://www.verycd.com/'
+    baseUrl = r'http://www.verycd.com'
     queryUrl = r'http://www.verycd.com/search/entries/'
     support_type = ['tv', 'movie']
 
@@ -86,7 +87,8 @@ class SearchEventHandler(EventHandler):
                 if type_support in cat_type:
                     # cat_name = cat_col.a['title']
                     name_col = title_div.find('strong', class_='cname')
-                    item_url = self.baseUrl + name_col.a['href']
+                    item_url = self.get_url_from_host_and_page(self.baseUrl, name_col.a['href'])
+                     #self.baseUrl + name_col.a['href']
                     item_name = name_col.a['title']
 
                     update_col = title_div.find('span', class_='update')
@@ -129,14 +131,22 @@ class SearchEventHandler(EventHandler):
                 pass
         return item_data
 
+    def get_url_from_host_and_page(self, host, page):
+        if host is None:
+            return None
+        elif page is None:
+            return host
+        elif host.endswith("/") and page.startswith("/"):
+            return host + page[1:]
+        else:
+            return host + page
+
 
 class MovieDetailEventHandler(EventHandler):
 
     @tornado.web.asynchronous
     def post(self):
-        str_data = self.request.body.decode("utf-8")
-        data = json.loads(str_data, "utf-8")
-        target_url = data["url"]
+        target_url = self.get_body_argument("url", None)
         self.set_header(contentTypeName, contentTypeValue)
         if target_url:
             async_client = tornado.httpclient.AsyncHTTPClient()
@@ -179,6 +189,7 @@ class MovieDetailEventHandler(EventHandler):
                             if len(info_item) == 2:
                                 ret_data[info_item[0]] = info_item[1]
                 del info_li
+                del info_lis
             del info_data_div
 
             watch_place_div = left_div.find_all("div", class_="entry_video_1")
@@ -216,6 +227,9 @@ class MovieDetailEventHandler(EventHandler):
                     if poster_url:
                         poster_list.append(poster_url)
                 ret_data["posters"] = poster_list
+                del posters_lis
+            del posters_div
+
         else:
             print("ssssssssssss")
         return ret_data
