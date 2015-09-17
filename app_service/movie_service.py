@@ -32,6 +32,12 @@ class EventHandler(tornado.web.RequestHandler):
         self.write(ret)
         self.finish()
 
+    def error_reply(self, message):
+        data = dict()
+        data["result"] = "error"
+        data["data"] = message
+        return data
+
 
 class HotMoviesEventHandler(EventHandler):
     def get(self, params=None):
@@ -64,7 +70,8 @@ class SearchEventHandler(EventHandler):
             async_client = tornado.httpclient.AsyncHTTPClient()
             async_client.fetch(self.queryUrl + query, self.async_handler)
         else:
-            self.write('{"result":"error", "reason":"no query keyword"}')
+            # self.write('{"result":"error", "reason":"no query keyword"}')
+            self.write(self.error_reply("no query keyword"))
             self.finish()
 
     def extract_data_from_html(self, response):
@@ -152,7 +159,8 @@ class MovieDetailEventHandler(EventHandler):
             async_client = tornado.httpclient.AsyncHTTPClient()
             async_client.fetch(target_url, self.async_handler)
         else:
-            self.write('{"result":"error", "reason":"bad request"}')
+            # self.write('{"result":"error", "reason":"bad request"}')
+            self.write(self.error_reply("bad request"))
             self.finish()
 
     def extract_data_from_html(self, response):
