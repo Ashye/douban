@@ -24,11 +24,17 @@ class EventHandler(tornado.web.RequestHandler):
     def extract_data_from_html(self, response):
         return dict()
 
+    def get_response_extra_data(self):
+        return None
+
     def async_handler(self, response):
         data = self.extract_data_from_html(response)
         ret = dict()
         ret['result'] = "ok"
         ret['data'] = data
+        extra_data = self.get_response_extra_data()
+        if extra_data:
+            ret["extra"] = extra_data
         self.write(ret)
         self.finish()
 
@@ -38,10 +44,13 @@ class EventHandler(tornado.web.RequestHandler):
         data["data"] = message
         return data
 
+    def set_default_content_type(self):
+        self.set_header(contentTypeName, contentTypeValue)
+
 
 class HotMoviesEventHandler(EventHandler):
     def get(self, params=None):
-        self.set_header(contentTypeName, contentTypeValue)
+        self.set_default_content_type()
         self.write(json.dumps(self.load_hot_movies()))
 
     def load_hot_movies(self):
@@ -50,7 +59,7 @@ class HotMoviesEventHandler(EventHandler):
 
 class ComingSoonMoviesEventHandler(EventHandler):
     def get(self, param=None):
-        self.set_header(contentTypeName, contentTypeValue)
+        self.set_default_content_type()
         self.write(json.dumps(self.load_coming_soon_movies()))
 
     def load_coming_soon_movies(self):
@@ -65,7 +74,7 @@ class SearchEventHandler(EventHandler):
     @tornado.web.asynchronous
     def get(self, params=None):
         query = self.get_query_argument("query", None)
-        self.set_header(contentTypeName, contentTypeValue)
+        self.set_default_content_type()
         if query:
             async_client = tornado.httpclient.AsyncHTTPClient()
             async_client.fetch(self.queryUrl + query, self.async_handler)
@@ -150,18 +159,23 @@ class SearchEventHandler(EventHandler):
 
 
 class MovieDetailEventHandler(EventHandler):
+    task_cache = dict()
 
     @tornado.web.asynchronous
     def post(self):
-        target_url = self.get_body_argument("url", None)
-        self.set_header(contentTypeName, contentTypeValue)
-        if target_url:
+        self.task_cache["url"] = self.get_body_argument("url", None)
+        self.task_cache["type"] = self.get_body_argument("type", None)
+        self.set_default_content_type()
+        if self.task_cache["url"]:
             async_client = tornado.httpclient.AsyncHTTPClient()
-            async_client.fetch(target_url, self.async_handler)
+            async_client.fetch(self.task_cache["url"], self.async_handler)
         else:
             # self.write('{"result":"error", "reason":"bad request"}')
             self.write(self.error_reply("bad request"))
             self.finish()
+
+    def get_response_extra_data(self):
+        return self.task_cache
 
     def extract_data_from_html(self, response):
         html = response.body.decode('utf-8')
