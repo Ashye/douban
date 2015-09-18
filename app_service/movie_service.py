@@ -17,6 +17,7 @@ contentTypeValue = r'application/json;charset=utf-8'
 
 
 class EventHandler(tornado.web.RequestHandler):
+    support_type = ['tv', 'movie']
 
     def get(self, params=None):
         raise tornado.web.HTTPError(405)
@@ -69,7 +70,6 @@ class ComingSoonMoviesEventHandler(EventHandler):
 class SearchEventHandler(EventHandler):
     baseUrl = r'http://www.verycd.com'
     queryUrl = r'http://www.verycd.com/search/entries/'
-    support_type = ['tv', 'movie']
 
     @tornado.web.asynchronous
     def get(self, params=None):
@@ -82,7 +82,7 @@ class SearchEventHandler(EventHandler):
             # self.write('{"result":"error", "reason":"no query keyword"}')
             self.write(self.error_reply("no query keyword"))
             self.finish()
-
+#区分电影影视搜索解析
     def extract_data_from_html(self, response):
         html = response.body.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
@@ -101,10 +101,8 @@ class SearchEventHandler(EventHandler):
             data = None
             for type_support in self.support_type:
                 if type_support in cat_type:
-                    # cat_name = cat_col.a['title']
                     name_col = title_div.find('strong', class_='cname')
                     item_url = self.get_url_from_host_and_page(self.baseUrl, name_col.a['href'])
-                     #self.baseUrl + name_col.a['href']
                     item_name = name_col.a['title']
 
                     update_col = title_div.find('span', class_='update')
@@ -160,6 +158,9 @@ class SearchEventHandler(EventHandler):
 
 class MovieDetailEventHandler(EventHandler):
     task_cache = dict()
+    filter_mask = ["在看", "看过", "想看", "观看预告片", "别名", "IMDb号"]
+    formal_property_name = {"类型":"category", "地区":"area", "导演":"director", "编剧":"writer", "演员":"actor", "上映日期":"releasedDate", "首播时间":"releasedDate", "集数":"episodes","电视台":"TVStation"}
+
 
     @tornado.web.asynchronous
     def post(self):
@@ -178,89 +179,156 @@ class MovieDetailEventHandler(EventHandler):
         return self.task_cache
 
     def extract_data_from_html(self, response):
-        html = response.body.decode('utf-8')
-        soup = BeautifulSoup(html, 'html.parser')
-        del html
-        ret_data = dict()
-        left_div = soup.find("div", class_="leftDiv")
-        if left_div:
-            del soup
-            title_str = self.extract_title(left_div)
-            ret_data["title"] = title_str
-
-            info_data_div = left_div.find("div", class_="headinfo_left")
-            if info_data_div:
-                pic_li = info_data_div.find("li", class_="imgdiv")
-                if pic_li:
-                    updated_str = pic_li.div.div.get_text()
-                    pic_url = pic_li.div.img["src"]
-                    # print(updated_str, pic_url)
-                    ret_data["cover"] = pic_url
-                    ret_data["updated"] = updated_str
-
-                del pic_li
-
-                info_li = info_data_div.find("li", class_="infodiv")
-                if info_li:
-                    info_lis = info_li.ul.find_all("li")
-                    for li_item in info_lis:
-                        span_items = li_item.find_all("span")
-                        for span in span_items:
-                            info_item_text = span.get_text()
-                            info_item = info_item_text.split("：")
-                            if len(info_item) == 2:
-                                ret_data[info_item[0]] = info_item[1]
-                del info_li
-                del info_lis
-            del info_data_div
-
-            watch_place_div = left_div.find_all("div", class_="entry_video_1")
-            if watch_place_div:
-                watch_platform = []
-                for place in watch_place_div:
-                    # print(place.name)
-                    place_name = place.get("name")
-                    if place_name == "playlist":
-                        # print(place_name)
-                        place_type = place.get("id")
-                        place_type_parts = place_type.split("_")
-                        if len(place_type_parts) == 2:
-                            watch_platform.append(place_type_parts[1])
-                ret_data["platform"] = watch_platform
-            del watch_place_div
-
-            comment_more = left_div.find("div", id="contents_more")
-            if comment_more:
-                # print(comment_more.name)
-                comment_text = comment_more.div.get_text()
-                ret_data["summary"] = comment_text
-            del comment_more
-
-            posters_div = left_div.find("ul", id="entry_image_div")
-            if posters_div:
-                # print(posters_div.name)
-                poster_list = []
-                posters_lis = posters_div.find_all("li")
-                for poster_li in posters_lis:
-                    poster_img = poster_li.find("img")
-                    poster_url = poster_img.get("_src")
-                    if poster_url is None:
-                        poster_url = poster_img.get("src")
-                    if poster_url:
-                        poster_list.append(poster_url)
-                ret_data["posters"] = poster_list
-                del posters_lis
-            del posters_div
-
-        else:
-            print("ssssssssssss")
+        html = response.body.decode("utf-8")
+        page_type = self.task_cache["type"]
+        ret_data = None
+        if self.support_type[0] == page_type:
+            ret_data = self.extract_tv_detail_data_from_html(html)
+        elif self.support_type[1] == page_type:
+            ret_data = self.extract_movie_detail_data_from_html(html)
+        if ret_data:
+            ret_data = self.filter_out_useless_item(ret_data)
         return ret_data
 
-    def extract_title(self, div):
-        title_div = div.find("div", class_="titleDiv")
+    def extract_movie_detail_data_from_html(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        # extract title
+        title_div = soup.find("div", class_="titleDiv")
+        detail_data = dict()
         if title_div:
-            # print(title_div.h1.get_text())
-            title = title_div.h1.get_text()
-            return title
-        else:
-            return None
+            detail_data["name"] = title_div.h1.get_text()
+        del title_div
+        # cover
+        cover_li = soup.find("li", class_="imgdiv")
+        if cover_li:
+            detail_data["cover"] = self.extract_image_src_data(cover_li.div.img)
+        del cover_li
+        # little property
+        info_li = soup.find("li", class_="infodiv")
+        if info_li:
+            item_spans = info_li.find_all("span")
+            for item_span in item_spans:
+                item_span_text = item_span.get_text()
+                if item_span_text:
+                    item_span_text_parts = item_span_text.split("：")
+                    property_formal_name = item_span_text_parts[0].strip()
+                    if len(item_span_text_parts) == 1:
+                        item_span_text_parts.append("")
+                    if property_formal_name in self.formal_property_name:
+                        property_formal_name = self.formal_property_name[property_formal_name]
+                    detail_data[property_formal_name] = item_span_text_parts[1]
+            del item_spans
+            del item_span
+            actor = detail_data["actor"]
+            indx = actor.find("更多»")
+            if indx != -1:
+                detail_data["actor"] = actor[0:indx]
+        del info_li
+        # summary
+        content_more_div = soup.find("div", id="contents_more")
+        if content_more_div:
+            detail_data["summary"] = content_more_div.get_text()
+        del content_more_div
+        # picture
+        poster_ul = soup.find("ul", id="entry_image_div")
+        if poster_ul:
+            poster_lis = poster_ul.find_all("li")
+            poster_data = []
+            for poster_li in poster_lis:
+                poster_img = poster_li.find("img")
+                if poster_img:
+                    poster_data.append(self.extract_image_src_data(poster_img))
+            del poster_lis
+            del poster_img
+            del poster_li
+            detail_data["poster"] = poster_data
+        del poster_ul
+        return detail_data
+
+    def extract_tv_detail_data_from_html(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        # extract title
+        title_div = soup.find("div", class_="titleDiv")
+        detail_data = dict()
+        if title_div:
+            detail_data["name"] = title_div.h1.get_text()
+        del title_div
+        # cover
+        cover_li = soup.find("li", class_="imgdiv")
+        if cover_li:
+            detail_data["cover"] = self.extract_image_src_data(cover_li.div.img)
+        del cover_li
+        # little property
+        info_li = soup.find("li", class_="infodiv")
+        if info_li:
+            item_spans = info_li.find_all("span")
+            for item_span in item_spans:
+                item_span_text = item_span.get_text()
+                if item_span_text:
+                    item_span_text_parts = item_span_text.split("：")
+                    property_formal_name = item_span_text_parts[0].strip()
+                    if len(item_span_text_parts) == 1:
+                        item_span_text_parts.append("")
+                    if property_formal_name in self.formal_property_name:
+                        property_formal_name = self.formal_property_name[property_formal_name]
+                    detail_data[property_formal_name] = item_span_text_parts[1]
+            del item_spans
+            del item_span
+            actor = detail_data["actor"]
+            indx = actor.find("更多»")
+            if indx != -1:
+                detail_data["actor"] = actor[0:indx]
+        del info_li
+        # updated
+        watch_place_div = soup.find_all("div", class_="entry_video_1")
+        if watch_place_div:
+            watch_platform = []
+            for place in watch_place_div:
+                if place.get("name") == "playlist":
+                    place_type = place.get("id")
+                    indx = place_type.find("_")
+                    if indx != -1:
+                        play_place_name = place_type[indx+1:]
+                        item_lis = place.find_all("li")
+                        tmp = dict()
+                        tmp[play_place_name] = len(item_lis)
+                        watch_platform.append(tmp)
+                    else:
+                        continue
+            detail_data["platform"] = watch_platform
+            del place
+            del item_lis
+        del watch_place_div
+        # summary
+        content_more_div = soup.find("div", id="contents_more")
+        if content_more_div:
+            detail_data["summary"] = content_more_div.get_text()
+        del content_more_div
+        # picture
+        poster_ul = soup.find("ul", id="entry_image_div")
+        if poster_ul:
+            poster_lis = poster_ul.find_all("li")
+            poster_data = []
+            for poster_li in poster_lis:
+                poster_img = poster_li.find("img")
+                if poster_img:
+                    poster_data.append(self.extract_image_src_data(poster_img))
+            del poster_lis
+            del poster_img
+            del poster_li
+            detail_data["poster"] = poster_data
+        del poster_ul
+        return detail_data
+
+    @staticmethod
+    def extract_image_src_data(img):
+        src_data = img.get("_src")
+        if src_data is None:
+            src_data = img.get("src")
+        return src_data
+
+    def filter_out_useless_item(self, data):
+        for key in self.filter_mask:
+            if key in data:
+                del data[key]
+        return data
