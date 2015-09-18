@@ -159,7 +159,7 @@ class SearchEventHandler(EventHandler):
 class MovieDetailEventHandler(EventHandler):
     task_cache = dict()
     filter_mask = ["在看", "看过", "想看", "观看预告片", "别名", "IMDb号"]
-    formal_property_name = {"类型":"category", "地区":"area", "导演":"director", "编剧":"writer", "演员":"actor", "上映日期":"releasedDate", "首播时间":"releasedDate", "集数":"episodes","电视台":"TVStation"}
+    formal_property_name = {"类型":"category", "地区":"area", "导演":"director", "编剧":"writer", "演员":"actor", "上映日期":"releasedDate", "首播时间":"releasedDate", "集数":"episodes","电视台":"TVStation", "配音演员":"actor"}
 
 
     @tornado.web.asynchronous
