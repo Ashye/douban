@@ -110,11 +110,13 @@ class SearchEventHandler(EventHandler):
                     if type_support in cat_type:
                         name_col = title_div.find('strong', class_='cname')
                         item_url = self.get_url_from_host_and_page(self.baseUrl, name_col.a.get("href"))
+
                         item_name = name_col.a.get("title")
                         item_data = dict()
                         item_data['type'] = self.formal_type_name[type_support]
                         item_data['name'] = item_name
                         item_data['homeUrl'] = item_url
+                        item_data['typeName'] = name_col.a.get_text()
                         del name_col
                         del cat_col
                         del title_div
