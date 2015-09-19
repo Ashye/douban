@@ -18,6 +18,7 @@ contentTypeValue = r'application/json;charset=utf-8'
 
 class EventHandler(tornado.web.RequestHandler):
     support_type = ['tv', 'movie']
+    formal_type_name = {"tv": "剧集", "movie": "电影"}
 
     def get(self, params=None):
         raise tornado.web.HTTPError(405)
@@ -71,79 +72,70 @@ class SearchEventHandler(EventHandler):
     baseUrl = r'http://www.verycd.com'
     queryUrl = r'http://www.verycd.com/search/entries/'
 
+    query_string = None
+
+
     @tornado.web.asynchronous
     def get(self, params=None):
-        query = self.get_query_argument("query", None)
+        self.query_string = self.get_query_argument("query", None)
         self.set_default_content_type()
-        if query:
+        if self.query_string:
             async_client = tornado.httpclient.AsyncHTTPClient()
-            async_client.fetch(self.queryUrl + query, self.async_handler)
+            async_client.fetch(self.queryUrl + self.query_string, self.async_handler)
         else:
             # self.write('{"result":"error", "reason":"no query keyword"}')
             self.write(self.error_reply("no query keyword"))
             self.finish()
-#区分电影影视搜索解析
+
+    def get_response_extra_data(self):
+        return dict(query=self.query_string)
+
     def extract_data_from_html(self, response):
         html = response.body.decode('utf-8')
         soup = BeautifulSoup(html, 'html.parser')
-
+        del html
         entry_list = soup.find("div", class_='entries_list')
         entry_items = entry_list.find_all('li', class_='entry_item')
         # print(len(entry_items))
+        item_list = []
+        if entry_items:
+            for item in entry_items:
+                item_data = None
+                title_div = item.find('div', class_='item_title')
+                cat_col = title_div.find('span', class_='cat')
+                cat_type = None
+                if cat_col:
+                    cat_type = cat_col.a.get("href")
+                for type_support in self.support_type:
+                    if type_support in cat_type:
+                        name_col = title_div.find('strong', class_='cname')
+                        item_url = self.get_url_from_host_and_page(self.baseUrl, name_col.a.get("href"))
+                        item_name = name_col.a.get("title")
+                        item_data = dict()
+                        item_data['type'] = self.formal_type_name[type_support]
+                        item_data['name'] = item_name
+                        item_data['homeUrl'] = item_url
+                        del name_col
+                        del cat_col
+                        del title_div
+                        content_div = item.find('div', class_='item_content')
+                        text_div = content_div.find('div', class_='text')
+                        text_ps = text_div.find_all('p')
+                        for text_p in text_ps:
+                            text = text_p.text
+                            if text:
+                                if "演员" in text:
+                                    item_data['actor'] = text.strip()
+                                else:
+                                    continue
+                        break
 
-        item_data = []
-        for item in entry_items:
-            title_div = item.find('div', class_='item_title')
-
-            cat_col = title_div.find('span', class_='cat')
-            cat_type = cat_col.a['href']
-
-            data = None
-            for type_support in self.support_type:
-                if type_support in cat_type:
-                    name_col = title_div.find('strong', class_='cname')
-                    item_url = self.get_url_from_host_and_page(self.baseUrl, name_col.a['href'])
-                    item_name = name_col.a['title']
-
-                    update_col = title_div.find('span', class_='update')
-                    item_update = update_col.text.strip()
-                    # print(item_update)
-
-                    data = dict()
-                    data['type'] = type_support
-                    data['name'] = item_name
-                    data['homeUrl'] = item_url
-                    data['updated'] = item_update
-
-                    content_div = item.find('div', class_='item_content')
-                    cover_a = content_div.find('div', class_='entry_cover')
-                    if cover_a:
-                        cover_img = cover_a.find('img', class_='cover_img')
-                        # print(cover_img)
-                        cover_url = cover_img['_src']
-                        if cover_url is None:
-                            cover_url = cover_img['src']
-
-                        if cover_url:
-                            data['cover'] = cover_url
-
-                    text_div = content_div.find('div', class_='text')
-                    text_ps = text_div.find_all('p')
-                    for text_p in text_ps:
-                        text = text_p.text
-                        if text:
-                            if "演员" in text:
-                                data['actor'] = text.strip()
-                            elif "简介" in text:
-                                data['description'] = text.strip()
-                    break
-
-            if data:
-                item_data.append(data)
-            else:
-                # print("not support type: \'", cat_type, "\'")
-                pass
-        return item_data
+                if item_data:
+                    item_list.append(item_data)
+                else:
+                    # print("not support type: \'", cat_type, "\'")
+                    pass
+        return item_list
 
     def get_url_from_host_and_page(self, host, page):
         if host is None:
@@ -159,7 +151,7 @@ class SearchEventHandler(EventHandler):
 class MovieDetailEventHandler(EventHandler):
     task_cache = dict()
     filter_mask = ["在看", "看过", "想看", "观看预告片", "别名", "IMDb号"]
-    formal_property_name = {"类型":"category", "地区":"area", "导演":"director", "编剧":"writer", "演员":"actor", "上映日期":"releasedDate", "首播时间":"releasedDate", "集数":"episodes","电视台":"TVStation", "配音演员":"actor"}
+    formal_property_name = {"类型": "category", "地区": "area", "导演": "director", "编剧": "writer", "演员": "actor", "上映日期": "releasedDate", "首播时间": "releasedDate", "集数": "episodes", "电视台": "TVStation", "配音演员": "actor"}
 
 
     @tornado.web.asynchronous
