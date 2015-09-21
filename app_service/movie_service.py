@@ -113,10 +113,10 @@ class SearchEventHandler(EventHandler):
 
                         item_name = name_col.a.get("title")
                         item_data = dict()
-                        item_data['type'] = self.formal_type_name[type_support]
+                        item_data['typeName'] = self.formal_type_name[type_support]
+                        item_data['type'] = type_support
                         item_data['name'] = item_name
                         item_data['homeUrl'] = item_url
-                        item_data['typeName'] = name_col.a.get_text()
                         del name_col
                         del cat_col
                         del title_div
@@ -160,6 +160,8 @@ class MovieDetailEventHandler(EventHandler):
     def post(self):
         self.task_cache["url"] = self.get_body_argument("url", None)
         self.task_cache["type"] = self.get_body_argument("type", None)
+        # print(self.request.body)
+        # print(self.task_cache)
         self.set_default_content_type()
         if self.task_cache["url"]:
             async_client = tornado.httpclient.AsyncHTTPClient()
